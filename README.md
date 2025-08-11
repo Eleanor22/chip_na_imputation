@@ -56,17 +56,19 @@ This documentation provides a comprehensive guide to the tools and methodologies
 
 ### Project layout
 
-There were implemented 7 imputation methods. They are:
+There were implemented 8 imputation methods. They are:
 1. Missing forest with the default setting of regressor/classifier (missforest_dflt) using MissForest
 2. Missing forest with a customized setting of regressor/classifier (missforest_cstm) using MissForest
 3. Iterative imputer (II) using IterativeImputer from sklearn
 4. Expectation-Maximization (EM) using impyute
 5. Multiple Imputation with Denoising Autoencoders (MIDAS) 
 6. DataWig
-7. Multiple Imputation by Chained Equations (MICE) using miceforest
+7. Iterative Datawig
+8. Multiple Imputation by Chained Equations (MICE) using miceforest
 
 **Note:**
-While some methods share similar underlying ideas, they may differ in subtle yet important aspects—whether they perform single or multiple imputations, the type of classifiers and regressors they use. These distinctions affect implementation and might affect the results.
+- While some methods share similar underlying ideas, they may differ in subtle yet important aspects—whether they perform single or multiple imputations, the type of classifiers and regressors they use. These distinctions affect implementation and might affect the results.
+- The II and EM methods do not support categorical variables. While these methods may be suitable for certain types of datasets, moving forward, our focus will shift to the other six imputation methods that are compatible with categorical data.
 
 **The project layout and description of each file is below.**
 ```plaintext
@@ -266,11 +268,16 @@ Two additional files will be automatically created:
     - `data_mapped_cols_enc.csv` 
     - `data_mapped_cols_not_enc.csv` 
 
-    MIDAS has built-in functionality to encode data as required by the model; therefore, it uses the unencoded dataset (`data_mapped_cols_not_enc.csv`) as input. All other models require categorical variables to be pre-encoded, so they use the encoded dataset (`data_mapped_cols_enc.csv`). \
+    MIDAS, MICE, and Datawig have built-in functionality to encode data as required by the model; therefore, it uses the unencoded dataset (`data_mapped_cols_not_enc.csv`) as input. All other models require categorical variables to be pre-encoded, so they use the encoded dataset (`data_mapped_cols_enc.csv`). \
     If these files already exist, they will be used to rerun the models.
 - Imputed Data Output: 
 The resulting imputed data will be created in the automatically generated folder 'imp_data'.
 The naming convention for these files is: `{name_of_the_method}_method_{test_or_train_dataset}_fold_{i}_{type_of_the_data}.csv`
+- Multiple imputed datasets:
+To quantify uncertainty, several datasets have been imputed using the MIDAS and MICE methods. For downstream analyses, results can be averaged across these multiple imputations, providing a more robust estimate by accounting for imputation uncertainty.
+- Iterative Datawig method
+The Datawig imputation method is not inherently iterative. As an alternative, we implemented an Iterative Datawig approach, where previously imputed columns are sequentially used to inform the imputation of subsequent columns. This procedure may lead to improved accuracy by leveraging information from earlier imputations.
+
 
 ## Potential improvements
 - Consider tuning the hyperparameters of the imputation methods to potentially improve their performance. All methods used in this project have parameters that can be adjusted to achieve better results. 
