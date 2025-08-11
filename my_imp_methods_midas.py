@@ -57,24 +57,11 @@ def my_missforest_dflt(train_data, test_data, param, output_dir_imp, folder='mis
     train_imputed_data = mf.fit_transform(train_data)
     test_imputed_data= mf.transform(test_data)
 
-    # for df in [train_imputed_data, test_imputed_data]:
-    #     for col in df.columns:
-    #         matching_bounds = [(key, bounds) for key, bounds in column_bounds.items() if key in col]
-    #         for key, (minv, maxv) in matching_bounds:
-    #             if pd.api.types.is_numeric_dtype(df[col]):
-    #                 if maxv is not None:
-    #                     df[col] = np.clip(df[col], minv, maxv)
-    #                 else:
-    #                     df[col] = np.maximum(df[col], minv)
-
     for df in [train_imputed_data, test_imputed_data]:
         for col in df.columns:
-            # print('YAYA WENT INSIDE!!!')
             for key, (minv, maxv) in column_bounds.items():
                 if key in col:
-                    # print('YAYA WENT INSIDE SECOND TIME!!!')
                     if pd.api.types.is_numeric_dtype(df[col]):
-                        # print('YAYA WENT INSIDE THIRD TIME!!!')
                         if maxv is not None:
                             df[col] = np.clip(df[col], minv, maxv)
                         else:
@@ -136,16 +123,6 @@ def my_missforest_cstm(train_data, test_data, param, output_dir_imp, folder='mis
 
     train_imputed_data = mf.fit_transform(train_data)
     test_imputed_data= mf.transform(test_data)
-
-    # for df in [train_imputed_data, test_imputed_data]:
-    #     for col in df.columns:
-    #         matching_bounds = [(key, bounds) for key, bounds in column_bounds.items() if key in col]
-    #         for key, (minv, maxv) in matching_bounds:
-    #             if pd.api.types.is_numeric_dtype(df[col]):
-    #                 if maxv is not None:
-    #                     df[col] = np.clip(df[col], minv, maxv)
-    #                 else:
-    #                     df[col] = np.maximum(df[col], minv)
 
     for df in [train_imputed_data, test_imputed_data]:
         for col in df.columns:
@@ -285,6 +262,22 @@ def my_midaspy(train_data, test_data, param, output_dir_imp, folder):
     """
     MIDASpy method implementation.
     """
+    column_bounds = {
+        'PHYSCORE_month': (0, 10),
+        'RHEURATE_month': (0, 10),
+        'ACTJONUM2_month': (0, 10),
+        'GHA_T_SCORE_month': (20, 80),
+        'DIS_ACT_month': (0, 10),
+        'RHEUM_PAIN_month': (0, 10),
+        'antiIL1_month': (0, 30),
+        'antiIL6_month': (0, 30),
+        'TNFi_month': (0, 30),
+        'methotrexate_month': (0, 30),
+        'otherBiologics_month': (0, 30),
+        'otherDMARDs_mont': (0, 30),
+        'smallMoleculeInhibitors_month': (0, 30)
+    }
+
     os.makedirs(f'{output_dir_imp}/{folder}', exist_ok=True)
     train_data = train_data.set_index('id')
     test_data = test_data.set_index('id')
@@ -357,7 +350,6 @@ def my_midaspy(train_data, test_data, param, output_dir_imp, folder):
     test_0_reset = test_0.reset_index(drop=True)
 
     scaler = MinMaxScaler()
-    # train_scaled = scaler.fit_transform(train_0)
     train_scaled = scaler.fit_transform(train_0_reset)
     test_scaled = scaler.transform(test_0_reset)
     train_scaled = pd.DataFrame(train_scaled, columns=train_0.columns)
@@ -372,10 +364,7 @@ def my_midaspy(train_data, test_data, param, output_dir_imp, folder):
     imputer.train_model() #training_epochs = 100 is dflt
     imputed_train = imputer.generate_samples(m=4).output_list
 
-    test_scaled = test_scaled[train_scaled.columns]
-    imputer.imputation_target = test_scaled
-    imputer.na_matrix = test_scaled.notnull().astype(bool)
-    print("Test mask/missing to impute:", (~imputer.na_matrix).sum().sum())
+    imputer.change_imputation_target(test_scaled)
     imputed_test = imputer.generate_samples(m=4).output_list
 
     for i in range(4):
@@ -408,14 +397,19 @@ def my_midaspy(train_data, test_data, param, output_dir_imp, folder):
             nan_rows = imputed_test_final.isnull().all(axis=1).sum()
             print(f"[MIDASpy] Warning: {miss_test} missing values remain in test after imputation. {nan_rows} rows are all-NaN (cannot impute).")
 
-        # JADAS mapping
+        for df in [imputed_train_final, imputed_test_final]:
+            for col in df.columns:
+                for key, (minv, maxv) in column_bounds.items():
+                    if key in col:
+                        if pd.api.types.is_numeric_dtype(df[col]):
+                            if maxv is not None:
+                                df[col] = np.clip(df[col], minv, maxv)
+                            else:
+                                df[col] = np.maximum(df[col], minv)
 
+        # JADAS mapping
         train_jadas = data_preprocessing.mapping_jadas(imputed_train_final)
         test_jadas  = data_preprocessing.mapping_jadas(imputed_test_final)
-
-        print(imputed_test_final.isnull().sum())
-        print(imputed_test_final.index)
-        print(test_id)
 
         train_jadas.to_csv(
             f'{output_dir_imp}/{folder}/midaspy_method_train_{param}_impute_{i+1}.csv',
