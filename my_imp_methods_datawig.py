@@ -158,8 +158,6 @@ def my_datawig(train_data, test_data, param, output_dir_imp, output_path_prefix=
                 for key, (minv, maxv) in matching_bounds:
                     imputed_vals = np.clip(imputed_vals, minv, maxv) if maxv is not None else np.maximum(imputed_vals, minv)
                 # Update imputed values in both imputed and working df!
-                # train_imputed.loc[train_col_null.index, col] = imputed_vals
-                # train_working.loc[train_col_null.index, col] = imputed_vals
                 safe_set_categorical(train_imputed, train_col_null.index, col, imputed_vals)
                 safe_set_categorical(train_working, train_col_null.index, col, imputed_vals)
 
@@ -171,9 +169,7 @@ def my_datawig(train_data, test_data, param, output_dir_imp, output_path_prefix=
                 matching_bounds = [(key, bounds) for key, bounds in column_bounds.items() if key in col]
                 for key, (minv, maxv) in matching_bounds:
                     imputed_vals_test = np.clip(imputed_vals_test, minv, maxv) if maxv is not None else np.maximum(imputed_vals_test, minv)
-                
-                # test_imputed.loc[test_col_null.index, col] = imputed_vals_test
-                # test_working.loc[test_col_null.index, col] = imputed_vals_test
+
                 safe_set_categorical(test_imputed, test_col_null.index, col, imputed_vals_test)
                 safe_set_categorical(test_working, test_col_null.index, col, imputed_vals_test)
             
@@ -245,7 +241,6 @@ def my_datawig_iterat(train_data, test_data, param, output_dir_imp, output_path_
             print(f"Imputing column: {col}")
             input_cols = [c for c in train_working.columns if c != col]
             
-            # For .fit() you should only use observed rows for the target
             train_col_notnull = train_working[train_working[col].notnull()]
             train_col_notnull_reset = train_col_notnull.reset_index()
             if train_col_notnull_reset.empty:
