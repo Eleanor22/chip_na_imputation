@@ -539,7 +539,7 @@ def my_mice(train_data, test_data, param, output_dir_imp, folder):
 
         test_jadas  = data_preprocessing.mapping_jadas(imputed_test_final_df)
         test_jadas.to_csv(
-            f'{output_dir_imp}/{folder}/mice_method_test_{param}.csv',
+            f'{output_dir_imp}/{folder}/mice_method_test_{param}_{i}.csv',
             index=True
         )
         del imputed_test_final
