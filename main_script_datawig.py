@@ -26,7 +26,7 @@ def extract_types(organized_data):
 def main():
     _basepath = '/home/ch268692/pjia_proj/models_full_dataset'
     _filepath = '/home/ch268692/pjia_proj/data'
-    _filename = 'data_poly_dx_15July2025.csv'
+    _filename = 'data_eleanor_5Aug2025.csv'
     _filename_mapped = 'data_mapped_cols_not_enc.csv'
     _filename_mapped_enc = 'data_mapped_cols_enc.csv'
     output_dir_imp = '/home/ch268692/pjia_proj/models_full_dataset/imp_data'
@@ -42,11 +42,13 @@ def main():
 
     # Dictionary of all the methods
     imputation_methods = {
-        'my_datawig': my_imp_methods_datawig.my_datawig 
+        'my_datawig': my_imp_methods_datawig.my_datawig,
+        'my_datawig_iterat': my_imp_methods_datawig.my_datawig_iterat 
         }
     
     for method_key, method in imputation_methods.items():
-        curr_organized_data = organized_data_enc_subset
+        # curr_organized_data = organized_data_enc_subset
+        curr_organized_data = organized_data_subset
 
 
         for fold_idx, fold_dict in enumerate(curr_organized_data):
