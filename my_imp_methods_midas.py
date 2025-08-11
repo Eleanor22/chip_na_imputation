@@ -42,10 +42,43 @@ def my_missforest_dflt(train_data, test_data, param, output_dir_imp, folder='mis
                 'psoriasis_month.0', 'psoriasis_month.6',
                 'newmed_month.0', 'newmed_month.6']
     categorical = [col for col in categorical if col in train_data.columns]
+
+    column_bounds = {
+        'PHYSCORE_month': (0, 10),
+        'RHEURATE_month': (0, 10),
+        'ACTJONUM2_month': (0, 10),
+        'GHA_T_SCORE_month': (20, 80),
+        'DIS_ACT_month': (0, 10),
+        'RHEUM_PAIN_month': (0, 10)
+        # 'diff_dx_symp_mth': (0, None)
+    }
     
     mf = MissForest(early_stopping=False, categorical=categorical)
     train_imputed_data = mf.fit_transform(train_data)
     test_imputed_data= mf.transform(test_data)
+
+    # for df in [train_imputed_data, test_imputed_data]:
+    #     for col in df.columns:
+    #         matching_bounds = [(key, bounds) for key, bounds in column_bounds.items() if key in col]
+    #         for key, (minv, maxv) in matching_bounds:
+    #             if pd.api.types.is_numeric_dtype(df[col]):
+    #                 if maxv is not None:
+    #                     df[col] = np.clip(df[col], minv, maxv)
+    #                 else:
+    #                     df[col] = np.maximum(df[col], minv)
+
+    for df in [train_imputed_data, test_imputed_data]:
+        for col in df.columns:
+            # print('YAYA WENT INSIDE!!!')
+            for key, (minv, maxv) in column_bounds.items():
+                if key in col:
+                    # print('YAYA WENT INSIDE SECOND TIME!!!')
+                    if pd.api.types.is_numeric_dtype(df[col]):
+                        # print('YAYA WENT INSIDE THIRD TIME!!!')
+                        if maxv is not None:
+                            df[col] = np.clip(df[col], minv, maxv)
+                        else:
+                            df[col] = np.maximum(df[col], minv)
     
     # Map JADAS and save for train
     train_jadas = data_preprocessing.mapping_jadas(train_imputed_data)
@@ -83,6 +116,16 @@ def my_missforest_cstm(train_data, test_data, param, output_dir_imp, folder='mis
                 'psoriasis_month.0', 'psoriasis_month.6',
                 'newmed_month.0', 'newmed_month.6']
     categorical = [col for col in categorical if col in train_data.columns]
+
+    column_bounds = {
+        'PHYSCORE_month': (0, 10),
+        'RHEURATE_month': (0, 10),
+        'ACTJONUM2_month': (0, 10),
+        'GHA_T_SCORE_month': (20, 80),
+        'DIS_ACT_month': (0, 10),
+        'RHEUM_PAIN_month': (0, 10)
+        # 'diff_dx_symp_mth': (0, None)
+    }
                 
     mf = MissForest(
         clf=RandomForestClassifier(n_jobs=-1), 
@@ -93,6 +136,26 @@ def my_missforest_cstm(train_data, test_data, param, output_dir_imp, folder='mis
 
     train_imputed_data = mf.fit_transform(train_data)
     test_imputed_data= mf.transform(test_data)
+
+    # for df in [train_imputed_data, test_imputed_data]:
+    #     for col in df.columns:
+    #         matching_bounds = [(key, bounds) for key, bounds in column_bounds.items() if key in col]
+    #         for key, (minv, maxv) in matching_bounds:
+    #             if pd.api.types.is_numeric_dtype(df[col]):
+    #                 if maxv is not None:
+    #                     df[col] = np.clip(df[col], minv, maxv)
+    #                 else:
+    #                     df[col] = np.maximum(df[col], minv)
+
+    for df in [train_imputed_data, test_imputed_data]:
+        for col in df.columns:
+            for key, (minv, maxv) in column_bounds.items():
+                if key in col:
+                    if pd.api.types.is_numeric_dtype(df[col]):
+                        if maxv is not None:
+                            df[col] = np.clip(df[col], minv, maxv)
+                        else:
+                            df[col] = np.maximum(df[col], minv)
     
     # Map JADAS and save for train
     train_jadas = data_preprocessing.mapping_jadas(train_imputed_data)
@@ -108,7 +171,7 @@ def my_missforest_cstm(train_data, test_data, param, output_dir_imp, folder='mis
         index=True
     )
 
-#   DOESN'T WORK FOR CAT AND CONT VARS AT THE SAME TIME
+#   DOESN'T WORK FOR CAT AND CONT VARS AT THE SAME TIME, essectially become the same as missforest if cat vars
 #   FANCYIMPUTER PACKAGE IS WORTH EXPLORING
 def my_iterative_imputer(train_data, test_data, param, output_dir_imp, folder): 
     os.makedirs(f'{output_dir_imp}/{folder}', exist_ok=True)
@@ -131,10 +194,14 @@ def my_iterative_imputer(train_data, test_data, param, output_dir_imp, folder):
         bounds_dict = {
             'PHYSCORE': (0, 10),
             'RHEURATE': (0, 10),
-            'ACTJONUM': (0, 10),
+            'ACTJONUM2': (0, 10),
             'educate_cat': (1, 5),
-            'income_cat': (1, 6)
+            'income_cat': (1, 6),
+            'GHA_T_SCORE': (20, 80),
+            'DIS_ACT': (0, 10),
+            'RHEUM_PAIN': (0, 10)
         }
+        
         min_values = []
         max_values = []
 
@@ -228,7 +295,7 @@ def my_midaspy(train_data, test_data, param, output_dir_imp, folder):
     
     cont_vars = [c for c in train_data.columns if 
                 'age' in c or 'diff_dx_symp_mth' in c or 'jadas' in c or 'PHYSCORE' in c or
-                 'RHEURATE' in c or 'ACTJONUM' in c or 'antiIL1_month' in c or
+                 'RHEURATE' in c or 'ACTJONUM2' in c or 'antiIL1_month' in c or
                  'antiIL6_month' in c or 'methotrexate_month' in c or
                  'otherBiologics_month' in c or 'otherDMARDs_month' in c or
                  'smallMoleculeInhibitors_month' in c or
@@ -268,47 +335,87 @@ def my_midaspy(train_data, test_data, param, output_dir_imp, folder):
     train_0 = pd.concat([train_numerical, train_bin, train_oh], axis=1)
     test_0  = pd.concat([test_numerical, test_bin, test_oh], axis=1)
 
+
+    # --- Check and align columns ---
+    missing_in_test = set(train_0.columns) - set(test_0.columns)
+    missing_in_train = set(test_0.columns) - set(train_0.columns)
+    for col in missing_in_test:
+        test_0[col] = np.nan
+    for col in missing_in_train:
+        train_0[col] = np.nan
+    train_0 = train_0[sorted(train_0.columns)]
+    test_0  = test_0[sorted(train_0.columns)]
+    # -----------------------------------------------------
+
+    train_id = train_0.index.copy()
+    test_id  = test_0.index.copy()  # will be used to restore row index after imputation
+    all_missing = test_0.isnull().all(axis=1)
+    if all_missing.any():
+        print(f"Warning: {all_missing.sum()} rows in test are all-NaN and will remain NaN after imputation!")
+
+    train_0_reset = train_0.reset_index(drop=True)
+    test_0_reset = test_0.reset_index(drop=True)
+
     scaler = MinMaxScaler()
-    train_scaled = scaler.fit_transform(train_0)
-    test_scaled = scaler.transform(test_0)
-    train_scaled = pd.DataFrame(train_scaled, columns=train_0.columns, index=train_0.index)
-    test_scaled  = pd.DataFrame(test_scaled, columns=test_0.columns,  index=test_0.index)
+    # train_scaled = scaler.fit_transform(train_0)
+    train_scaled = scaler.fit_transform(train_0_reset)
+    test_scaled = scaler.transform(test_0_reset)
+    train_scaled = pd.DataFrame(train_scaled, columns=train_0.columns)
+    test_scaled = pd.DataFrame(test_scaled, columns=test_0.columns)
     train_scaled[train_scaled.isnull()] = np.nan
     test_scaled[test_scaled.isnull()]   = np.nan
     
     #layer_structure dflt [256,256,256]
     #input_drop = 0.8  is dflt, was 0.75
     imputer = md.Midas(vae_layer = False, seed= 89, savepath=output_dir_imp) 
-    # imputer.build_model(train_scaled, binary_columns = bin_vars, softmax_columns = cat_col_list)
     imputer.build_model(train_scaled, softmax_columns = cat_col_list)
     imputer.train_model() #training_epochs = 100 is dflt
     imputed_train = imputer.generate_samples(m=4).output_list
 
+    test_scaled = test_scaled[train_scaled.columns]
     imputer.imputation_target = test_scaled
+    imputer.na_matrix = test_scaled.notnull().astype(bool)
+    print("Test mask/missing to impute:", (~imputer.na_matrix).sum().sum())
     imputed_test = imputer.generate_samples(m=4).output_list
+
     for i in range(4):
-        # Undo scaling
         imputed_train_unscaled = pd.DataFrame(
-            scaler.inverse_transform(imputed_train[i]), columns=imputed_train[i].columns, index=imputed_train[i].index
+            scaler.inverse_transform(imputed_train[i].values), 
+            columns=train_0.columns,
+            index=train_id
         )
+       
         imputed_test_unscaled = pd.DataFrame(
-            scaler.inverse_transform(imputed_test[i]), columns=imputed_test[i].columns, index=imputed_test[i].index
+            scaler.inverse_transform(imputed_test[i].values), 
+            columns=test_0.columns,
+            index=test_id
         )
 
-        flat_cats = [cat for variable in cat_col_list for cat in variable]
+        flat_cats = [cat for variable in cat_col_list for cat in variable] 
         tmp_cat = [imputed_train_unscaled[x].idxmax(axis=1) for x in cat_col_list]
-        cat_df = pd.DataFrame({cat_vars[j]:tmp_cat[j] for j in range(len(cat_vars))})
+        cat_df = pd.DataFrame({cat_vars[j]:tmp_cat[j] for j in range(len(cat_vars))}, index=imputed_train_unscaled.index)
         imputed_train_final = pd.concat([imputed_train_unscaled, cat_df], axis = 1).drop(flat_cats, axis = 1)
         
         tmp_cat = [imputed_test_unscaled[x].idxmax(axis=1) for x in cat_col_list]
-        cat_df = pd.DataFrame({cat_vars[j]:tmp_cat[j] for j in range(len(cat_vars))})
+        cat_df = pd.DataFrame({cat_vars[j]:tmp_cat[j] for j in range(len(cat_vars))}, index=imputed_test_unscaled.index)
         imputed_test_final = pd.concat([imputed_test_unscaled, cat_df], axis = 1).drop(flat_cats, axis = 1)
         
-        
+        miss_train = imputed_train_final.isnull().sum().sum()
+        miss_test = imputed_test_final.isnull().sum().sum()
+        if miss_train > 0:
+            print(f"[MIDASpy] Warning: {miss_train} missing values remain in train after imputation.")
+        if miss_test > 0:
+            nan_rows = imputed_test_final.isnull().all(axis=1).sum()
+            print(f"[MIDASpy] Warning: {miss_test} missing values remain in test after imputation. {nan_rows} rows are all-NaN (cannot impute).")
+
         # JADAS mapping
 
         train_jadas = data_preprocessing.mapping_jadas(imputed_train_final)
         test_jadas  = data_preprocessing.mapping_jadas(imputed_test_final)
+
+        print(imputed_test_final.isnull().sum())
+        print(imputed_test_final.index)
+        print(test_id)
 
         train_jadas.to_csv(
             f'{output_dir_imp}/{folder}/midaspy_method_train_{param}_impute_{i+1}.csv',
@@ -318,6 +425,17 @@ def my_midaspy(train_data, test_data, param, output_dir_imp, folder):
             f'{output_dir_imp}/{folder}/midaspy_method_test_{param}_impute_{i+1}.csv',
             index=True
         )
+
+def apply_column_bounds(df, column_bounds):
+    for col in df.columns:
+        matching_bounds = [(key, bounds) for key, bounds in column_bounds.items() if key in col]
+        for key, (minv, maxv) in matching_bounds:
+            if pd.api.types.is_numeric_dtype(df[col]):
+                if maxv is not None:
+                    df[col] = np.clip(df[col], minv, maxv)
+                else:
+                    df[col] = np.maximum(df[col], minv)
+    return df
 
 def my_mice(train_data, test_data, param, output_dir_imp, folder):
     """
@@ -348,10 +466,30 @@ def my_mice(train_data, test_data, param, output_dir_imp, folder):
         test_data[col] = test_data[col].astype("category")
 
     cols_to_drop = [col for col in train_data.columns if train_data[col].dropna().nunique() <= 1]
+    # Store the value for each degenerate column
+    degenerate_values = {}
+    for col in cols_to_drop:
+        vals = train_data[col].dropna().unique()
+        if len(vals) > 0:
+            degenerate_values[col] = vals[0]
+        else:
+            degenerate_values[col] = np.nan
+
     if cols_to_drop:
         print(f"Dropped degenerate columns in fold: {cols_to_drop}")
         train_data = train_data.drop(columns=cols_to_drop)
         test_data = test_data.drop(columns=cols_to_drop)
+    original_columns = list(train_data.columns) + cols_to_drop
+
+    column_bounds = {
+        'PHYSCORE': (0, 10),
+        'RHEURATE': (0, 10),
+        'ACTJONUM2': (0, 10),
+        'GHA_T_SCORE': (20, 80),
+        'DIS_ACT': (0, 10),
+        'RHEUM_PAIN': (0, 10),
+        # 'diff_dx_symp_mth': (0, None)
+    }
 
     mean_match_strategy = {col: ("fast" if col in bin_cat else "normal") for col in train_data.columns}
     kds = mf.ImputationKernel(
@@ -362,27 +500,6 @@ def my_mice(train_data, test_data, param, output_dir_imp, folder):
         mean_match_strategy=mean_match_strategy
     )
 
-    # optimal_params = kds.tune_parameters(
-    #     dataset=0,
-    #     use_gbdt=True,
-    #     num_iterations=100,
-    #     random_state=0,
-    #     extra_trees=[True, False],
-    #     min_data_in_leaf=(2,5)
-    # )
-
-    kds.mice(iterations=25) #, variable_parameters=optimal_params
-    for i in range(4):
-        imputed_train_final = kds.complete_data(dataset=i, inplace=False) 
-        train_jadas = data_preprocessing.mapping_jadas(imputed_train_final)
-        train_jadas.to_csv(
-        f'{output_dir_imp}/{folder}/mice_method_train_{param}_{i}.csv',
-        index=True
-        )
-        del imputed_train_final
-        del train_jadas
-        gc.collect()
-        
     # Ensures column order identical
     test_data = test_data[train_data.columns]
 
@@ -391,14 +508,41 @@ def my_mice(train_data, test_data, param, output_dir_imp, folder):
         test_data[col] = test_data[col].astype("category")
         test_data[col] = test_data[col].cat.set_categories(train_data[col].cat.categories)
 
-    imputed_test_final = kds.impute_new_data(new_data=test_data, random_state=0)
-    imputed_test_final_df = imputed_test_final.complete_data()
-    test_jadas  = data_preprocessing.mapping_jadas(imputed_test_final_df)
-    test_jadas.to_csv(
-        f'{output_dir_imp}/{folder}/mice_method_test_{param}.csv',
-        index=True
-    )
-    del imputed_test_final
-    del imputed_test_final_df
-    del test_jadas
-    gc.collect()
+    kds.mice(iterations=25) #, variable_parameters=optimal_params
+    for i in range(4):
+        imputed_train_final = kds.complete_data(dataset=i, inplace=False) 
+        imputed_train_final = apply_column_bounds(imputed_train_final, column_bounds)
+
+        # --- Add back degenerate columns ---
+        for col, value in degenerate_values.items():
+            imputed_train_final[col] = value
+        imputed_train_final = imputed_train_final.reindex(columns=original_columns)
+        # -------------------------------------
+
+        train_jadas = data_preprocessing.mapping_jadas(imputed_train_final)
+        train_jadas.to_csv(
+        f'{output_dir_imp}/{folder}/mice_method_train_{param}_{i}.csv', index=True)
+        del imputed_train_final
+        del train_jadas
+        gc.collect()
+        
+
+        imputed_test_final = kds.impute_new_data(new_data=test_data, random_state=0)
+        imputed_test_final_df = imputed_test_final.complete_data()
+        imputed_test_final_df = apply_column_bounds(imputed_test_final_df, column_bounds)
+
+        # --- Add back degenerate columns ---
+        for col, value in degenerate_values.items():
+            imputed_test_final_df[col] = value
+        imputed_test_final_df = imputed_test_final_df.reindex(columns=original_columns)
+        # -------------------------------------
+
+        test_jadas  = data_preprocessing.mapping_jadas(imputed_test_final_df)
+        test_jadas.to_csv(
+            f'{output_dir_imp}/{folder}/mice_method_test_{param}.csv',
+            index=True
+        )
+        del imputed_test_final
+        del imputed_test_final_df
+        del test_jadas
+        gc.collect()
