@@ -10,6 +10,7 @@ import os
 
 # !!!!!!!!!--IMPORTANT NOTES--!!!!!!!!!!!
 # rad_damage only has baseline, no 6 month data 
+# psoriasis only has 6 month, no baseline
 
 
 def data_converter_dynamics(filepath, filename):
