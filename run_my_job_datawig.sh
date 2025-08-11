@@ -1,13 +1,12 @@
 #!/bin/bash
 #SBATCH --partition=bch-compute
-#SBATCH --account=bch
 #SBATCH --time=11:59:59
 #SBATCH --job-name=data_imp_job_v1
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=eleanor.belkin@childrens.harvard.edu
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=10   
-#SBATCH --mem=16GB
+#SBATCH --cpus-per-task=16   
+#SBATCH --mem=64GB
 
 
 # >>>>>> Activate conda environment <<<<<<
