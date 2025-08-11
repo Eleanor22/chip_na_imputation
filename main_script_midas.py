@@ -45,9 +45,7 @@ def main():
     imputation_methods = {
         'miss_forest_dflt': my_imp_methods_midas.my_missforest_dflt,
         'miss_forest_cstm': my_imp_methods_midas.my_missforest_cstm,
-        # 'my_iterative_imputer': my_imp_methods_midas.my_iterative_imputer,
-        # 'em_method': my_imp_methods_midas.em_method,
-        # 'my_midaspy': my_imp_methods_midas.my_midaspy,
+        'my_midaspy': my_imp_methods_midas.my_midaspy,
         'my_mice': my_imp_methods_midas.my_mice
         }
     
@@ -59,7 +57,6 @@ def main():
 
         for fold_idx, fold_dict in enumerate(curr_organized_data):
             print(f'Fold:{fold_idx}')
-            # if fold_idx !=0:
             # --- type_2 ---
             train_data_type2 = fold_dict['train']['type_2']  # List: two elements (0, 6)
             test_data_type2 = fold_dict['test']['type_2']
