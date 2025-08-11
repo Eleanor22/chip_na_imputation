@@ -64,26 +64,32 @@ def data_preprocessing(data, flag=False):
                 # print(f"Column: {col}, Unique values after replacing: {data[col].unique()}")
                 
     return data
-                
-                
+
+
 def mapping_jadas(data):
     """
     Maps JADAS scores based on the provided columns.
     """
-    jadas_cols = [col for col in data.columns if col.startswith('jadas.')]
+    
+    jadas_cols = [col for col in data.columns if col.startswith('jadas_month.')]
     for j_col in jadas_cols:
         time_suffix = j_col.split('.')[-1]
-        
-        phys_col = f'PHYSCORE.{time_suffix}'
-        rheu_col = f'RHEURATE.{time_suffix}'
-        actj_col = f'ACTJONUM2.{time_suffix}'
-        
-        # Make sure all columns exist before computing
+
+        phys_col = f'PHYSCORE_month.{time_suffix}'
+        rheu_col = f'RHEURATE_month.{time_suffix}'
+        actj_col = f'ACTJONUM2_month.{time_suffix}'
+
         if all(col in data.columns for col in [phys_col, rheu_col, actj_col]):
-            print(f"Calculating JADAS.{time_suffix} using {phys_col}, {rheu_col}, {actj_col}")
-            data[j_col] = data[phys_col] + \
-                data[rheu_col] +\
-                data[actj_col]
+            # print(f"Calculating {j_col} using {phys_col}, {rheu_col}, {actj_col}")
+            # Convert to numeric
+            data[j_col] = (
+                pd.to_numeric(data[phys_col], errors="coerce") +
+                pd.to_numeric(data[rheu_col], errors="coerce") +
+                pd.to_numeric(data[actj_col], errors="coerce")
+            )
+            nan_rows = data[j_col].isnull().sum()
+            if nan_rows:
+                print(f"{j_col} has {nan_rows} NaNs after sum (due to NaNs in components)")
         else:
-            print(f"One or more components missing for JADAS.{time_suffix}, skipping.")
+            print(f"One or more components missing for {j_col}, skipping.")
     return data
